@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+	<title>Against Junk Food</title>
+
+	<style>
+	#container {
+				width		: 100%;
+				height		: 100%;
+				overflow	: hidden;
+				padding		: 0;
+				margin		: 0;
+				-webkit-user-select	: none;
+				-moz-user-select	: none;
+			}
+	</style>
+
+	<script type='text/javascript' src='jquery-1.9.1.js'></script>
+	<script type='text/javascript' src="Box2dWeb-2.1.a.3.min.js"></script>    
+	<script type='text/javascript' src="boxbox.min.js"></script>
+	<script type='text/javascript' src="keyDecode.js"></script> 
+	<script type='text/javascript' src="virtualjoystick.js"></script>
+	    
+</head>
+<body>
+
+<div id="container">
+<canvas id="game" width="1024" height="768">
+    Your browser doesn't support Canvas !
+</canvas>
+</div>
+  
+ 
+ 
+<script type='text/javascript'>
+//<![CDATA[ 
+ 
+(function( global ) {
+ 
+	var canvasElem = document.getElementById( "game" );
+	var world = boxbox.createWorld( canvasElem, { collisionOutlines: false } );
+ 
+	var fruitConfig = {
+		name: "fruit",
+		shape: "circle",
+		radius: 1.5,
+		image: "images/apple.png", 		
+    	imageStretchToFit: true,
+		density: 4,
+		x: 2, 
+    	y: 11,
+		onKeyDown: function( e ) {
+			var key = global.keyDecode( e ),
+			force = 200,
+        	that = this;
+ 
+			console.log( "key", key );
+			switch ( key ) {
+				case "left":  this.setForce( "movement", force, 270 ); break;
+				case "up":    this.setForce( "movement", force,   0 ); break;
+				case "right": this.setForce( "movement", force,  90 ); break;
+				case "down":  this.setForce( "movement", force, 180 ); break;
+				default:      
+	                this.applyImpulse( 300,  60 );
+			}
+			this.friction( 0.1 );
+		},
+		onKeyUp: function( e ) {
+			this.clearForce( "movement" );
+		},
+    	onFinishContact: function( e ) {
+    		console.log( "onFinishContact", this, e );
+    	}
+	};
+
+	var fruit = world.createEntity( fruitConfig, {
+		x: 2,
+		onRender: function( ctx ) {
+			ctx.font = "20pt Arial";
+			ctx.fillText( "Score: " + this._ops.score, 20, 20 )
+		},
+		score: 0
+	});
+
+
+	var joystick	= new VirtualJoystick({
+		container	: document.getElementById('container'),
+		mouseSupport	: true
+	});
+	setInterval(function(){		
+
+		if(joystick.left()) {
+			//joystick.deltaX
+			fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 37 } ] );
+	    	fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 50 } ] );
+		}
+
+		if(joystick.right()) {
+			fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 39 } ] );
+	    	fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 50 } ] );
+		}
+		if(joystick.up()) {
+			fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 38 } ] );
+	    	fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 50 } ] );
+		}
+
+		if(joystick.down()) {
+			fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 40 } ] );
+	    	fruit._ops.onKeyDown.apply( fruit, [ { keyCode: 50 } ] );
+		}
+
+	}, 1/30 * 5000);
+
+
+    
+
+    
+	world.createEntity({
+		name: "ground",
+		shape: "square",
+		type: "static",
+		color: "rgb(0,0,100)",
+		width: 42,
+		height: 0.5,
+		y: 12
+	});
+
+	var block = {
+		name: "block",
+		shape: "square",
+		color: "brown",
+		width: 0.5,
+		height: 4,
+		y: 10,
+		onImpact: function( entity, force ) {
+			if ( entity.name() === "fruit" ) {
+				this.color( "black" );
+			}
+			if ( force > 100 && entity.name() !== "ground" ) {
+				this.destroy();
+			}
+		}
+	};
+
+	world.createEntity( block, { x: 13 } );
+
+	world.createEntity( block, { x: 19 } );
+
+	world.createEntity( block, {
+		x: 16,
+		y: 7,
+		width: 7,
+		height: 0.5
+	});
+
+	var Coke = world.createEntity({
+		name: "coke",
+		shape: "circle",
+		radius: 1,
+		image: "images/coke.png",
+		imageStretchToFit: true,
+		density: 4,
+		x: 16.5,
+		y: 11,
+		onImpact: function( entity, force ) {
+			if ( force > 75 && entity.name() !== "ground" ) {
+				fruit._ops.score += 1000;
+				Coke.destroy();
+			}
+		}
+	});
+
+	world.createEntity( block, { x: 14, y: 6, height: 3 } );
+	world.createEntity( block, { x: 18, y: 6, height: 3 } );
+	world.createEntity( block, { x: 16, y: 4, width: 5, height: 0.5 } );
+
+	var Burger = world.createEntity({
+		name: "burger",
+		shape: "circle",
+		radius: 1,
+		image: "images/burger.png",
+		imageStretchToFit: true,
+		density: 4,
+		x: 16.5,
+		y: 6.3,
+		onImpact: function( entity, force ) {
+			if ( force > 75 && entity.name() !== "ground" ) {
+				fruit._ops.score += 1000;
+				Burger.destroy();
+			}
+		}
+	});
+
+	world.createEntity({
+		x: 31,
+		y: 0,
+		type: "static",
+		height: 23.5,
+		name: "block",
+		shape: "square",
+		color: "rgb(0,0,100)",
+		borderColor: "rgb(0,0,100)",
+		width: 0.5
+	});
+    
+    
+}( this ));
+ 
+ 
+//]]>  
+ 
+</script>
+ 
+ 
+</body>
+ 
+ 
+</html>
+ 
+
